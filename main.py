@@ -24,9 +24,9 @@ if __name__ == '__main__':
     #Set Parameters
     batch_size = 64
     lr = 0.02
-    num_epochs = 20
+    num_epochs = 5
 
-    #Data Augumentation
+    #Data Preprocess and Data Augumentation
     mytansform = transforms.Compose([
         transforms.RandomRotation(45),
         transforms.Resize([32,32]),
@@ -51,24 +51,31 @@ if __name__ == '__main__':
     if is_train:
         epoch_count = 0
         model.train(mode=True)
-        for data in loader_train:
-            img, label = data
-            img = img.cuda()
-            label = label.cuda()
+        while epoch_count < num_epochs:
+            for data in loader_train:
+                img, label = data
+                img = img.cuda()
+                label = label.cuda()
 
-            output = model(img)
-            loss = criterion(output, label)
+                output = model(img)
+                loss = criterion(output, label)
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
             epoch_count+=1
+            print('Epoch:{}, Loss:{:.4}'.format(epoch_count, loss))
 
-            if epoch_count%50 == 0:
-                print('Epoch:{}, Loss:{:.4}'.format(epoch_count, loss))
+        #Save the model
+        torch.save(model.state_dict(),'./ModelPara/LeNet/lenet.pt')
+        print('Model has been saved.')
 
-    # Test Stage
+    # Test Stage (Need to complete)
     if not is_train:
+        #Load the model(The model must be defined beforehand if you use the function .load_state_dict())
+        model.load_state_dict(torch.load('./ModelPara/LeNet/lenet.pt'))
+        #-
         model.eval()
         sample_count = 0
         right_count = 0
