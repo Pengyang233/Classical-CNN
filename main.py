@@ -15,6 +15,7 @@ import matplotlib.pylab as plt
 
 #Choose medel file
 import LeNet
+import DataUtils
 
 
 if __name__ == '__main__':
@@ -27,22 +28,8 @@ if __name__ == '__main__':
     lr = 0.02
     num_epochs = 5
 
-    #Data Preprocess and Data Augumentation
-    train_tansform = transforms.Compose([
-        transforms.RandomRotation(45),
-        transforms.Resize([32,32]),
-        transforms.ToTensor()        
-    ])
-    test_transform = transforms.Compose([
-        transforms.Resize([32,32]),
-        transforms.ToTensor()
-    ])
-
-    #Generate Dataset
-    mnist_train = datasets.MNIST(root='./dataset/mnist', train=True, download=True,transform=train_tansform)
-    mnist_test = datasets.MNIST(root='./dataset/mnist', train=False, download=True,transform=test_transform)
-    loader_train = DataLoader(mnist_train, batch_size=batch_size, shuffle=True)
-    loader_test = DataLoader(mnist_test, batch_size=batch_size)
+    #Data preprocessing
+    [loader_train, loader_test] = DataUtils.DataPreprocess1(batch_size=batch_size)
 
     #Chose Model
     model = LeNet.LeNet()
