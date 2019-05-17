@@ -19,25 +19,30 @@ import LeNet
 
 if __name__ == '__main__':
     #Train or not
-    is_train = True
+    is_train = False
     show = ToPILImage()
     #Set Parameters
+    num_class = 10
     batch_size = 64
     lr = 0.02
     num_epochs = 5
 
     #Data Preprocess and Data Augumentation
-    mytansform = transforms.Compose([
+    train_tansform = transforms.Compose([
         transforms.RandomRotation(45),
         transforms.Resize([32,32]),
         transforms.ToTensor()        
     ])
+    test_transform = transforms.Compose([
+        transforms.Resize([32,32]),
+        transforms.ToTensor()
+    ])
 
     #Generate Dataset
-    mnist_train = datasets.MNIST(root='./dataset/mnist', train=True, download=True,transform=mytansform)
-    mnist_test = datasets.MNIST(root='./dataset/mnist', train=False, download=True,transform=mytansform)
+    mnist_train = datasets.MNIST(root='./dataset/mnist', train=True, download=True,transform=train_tansform)
+    mnist_test = datasets.MNIST(root='./dataset/mnist', train=False, download=True,transform=test_transform)
     loader_train = DataLoader(mnist_train, batch_size=batch_size, shuffle=True)
-    loader_test = DataLoader(mnist_test, batch_size=batch_size, shuffle=True)
+    loader_test = DataLoader(mnist_test, batch_size=batch_size)
 
     #Chose Model
     model = LeNet.LeNet()
@@ -54,8 +59,16 @@ if __name__ == '__main__':
         while epoch_count < num_epochs:
             for data in loader_train:
                 img, label = data
+
+                #Convert label to one_hot format
+                # label = label.view(-1,1)
+                # label_onehot = torch.zeros(batch_size, num_class).scatter_(1,label,1)
+                # label_onehot = label.long()
+                # print(label_onehot)
+                #Move to GPU
                 img = img.cuda()
                 label = label.cuda()
+                # label_onehot = label_onehot.cuda()
 
                 output = model(img)
                 loss = criterion(output, label)
@@ -82,16 +95,29 @@ if __name__ == '__main__':
         acc = 0
         test_loss = 0
         for data in loader_test:
-            sample_count +=1
 
             img, label = data
+            img = img.cuda()
+            label = label.cuda()
 
             output = model(img)
             loss = criterion(output, label)
-            if output == label:
-                right_count += 1
+            prediceted = torch.max(output.data,1)[1]
 
+            sample_count += prediceted.size(0)
+            '''Result:
+               >> prediceted.size()  ->  torch.Size([64])
+               >> prediceted.size(0) ->  64
+               >> prediceted.size(1) ->  Raise Error
+            '''
+            right_count += (prediceted==label).sum().item()
+            '''Result:
+               >> (prediceted==label).sum()  ->  tensor(63, device='cuda:0')
+               >> (prediceted==label).sum().item()  ->  63 
+            '''
             acc = right_count/sample_count
+        print('The accuracy is {}'.format(acc))
+        print('The loss on test set is {}'.format(loss))
 
 
 
